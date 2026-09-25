@@ -454,10 +454,10 @@ if uploaded_file is not None:
 
     ax_left.set_xticklabels(
         [
-            f"{x:.6g}"
+            f"{x:.4g}"
             for x in bin_centers
         ],
-        fontsize=10
+        fontsize=8
     )
 
 
