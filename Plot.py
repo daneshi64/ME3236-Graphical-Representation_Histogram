@@ -40,7 +40,7 @@ st.write(
 
 
 # ------------------------------------------------------------
-# Labels
+# LABELS
 # ------------------------------------------------------------
 
 seq_x_label = st.text_input(
@@ -57,7 +57,7 @@ seq_y_label = st.text_input(
 
 
 # ------------------------------------------------------------
-# Upload CSV
+# UPLOAD CSV
 # ------------------------------------------------------------
 
 seq_file = st.file_uploader(
@@ -151,7 +151,7 @@ if not valid_seq_summary:
 if seq_file is not None and valid_seq_summary:
 
     # --------------------------------------------------------
-    # Read headerless CSV
+    # READ HEADERLESS CSV
     # --------------------------------------------------------
 
     seq_df = pd.read_csv(
@@ -167,7 +167,7 @@ if seq_file is not None and valid_seq_summary:
 
     else:
 
-        # Keep only the first two columns
+        # Keep only first two columns
         seq_df = seq_df.iloc[:, :2]
 
         seq_df.columns = [
@@ -177,7 +177,7 @@ if seq_file is not None and valid_seq_summary:
 
 
         # ----------------------------------------------------
-        # Convert columns to numeric
+        # CONVERT COLUMNS TO NUMERIC
         # ----------------------------------------------------
 
         seq_df["Index / Location"] = pd.to_numeric(
@@ -209,7 +209,7 @@ if seq_file is not None and valid_seq_summary:
         else:
 
             # ------------------------------------------------
-            # Extract x and y
+            # EXTRACT DATA
             # ------------------------------------------------
 
             seq_x = seq_df[
@@ -222,7 +222,7 @@ if seq_file is not None and valid_seq_summary:
 
 
             # ------------------------------------------------
-            # Show imported data
+            # SHOW IMPORTED DATA
             # ------------------------------------------------
 
             st.subheader("Imported Sequential Data")
@@ -254,12 +254,16 @@ if seq_file is not None and valid_seq_summary:
             ax1.plot(
                 seq_x,
                 seq_y,
+
+                # Open-circle symbols
                 marker="o",
-                linestyle="-",
-                markersize=6,
+                markersize=7,
                 markerfacecolor="none",
                 markeredgecolor="black",
-                markeredgewidth=1.0,
+                markeredgewidth=1.2,
+
+                # Connecting line
+                linestyle="-",
                 linewidth=0.8,
                 color="black"
             )
@@ -276,7 +280,7 @@ if seq_file is not None and valid_seq_summary:
                 x_max_seq - x_min_seq
             )
 
-            # Prevent problems if all x values are identical
+            # Prevent division/spacing problems
             if x_range == 0:
                 x_range = 1.0
 
@@ -285,7 +289,7 @@ if seq_file is not None and valid_seq_summary:
             # MEDIAN AND ± STANDARD DEVIATION LINES
             # =================================================
 
-            # Median (Q2)
+            # Median
             ax1.hlines(
                 y=seq_median,
                 xmin=x_min_seq,
@@ -295,7 +299,8 @@ if seq_file is not None and valid_seq_summary:
                 linewidth=1.2
             )
 
-            # Median + one standard deviation
+
+            # Median + standard deviation
             ax1.hlines(
                 y=seq_median + seq_std,
                 xmin=x_min_seq,
@@ -305,7 +310,8 @@ if seq_file is not None and valid_seq_summary:
                 linewidth=1.0
             )
 
-            # Median - one standard deviation
+
+            # Median - standard deviation
             ax1.hlines(
                 y=seq_median - seq_std,
                 xmin=x_min_seq,
@@ -319,6 +325,9 @@ if seq_file is not None and valid_seq_summary:
             # =================================================
             # POSITION OF BOX-AND-WHISKER PLOT
             # =================================================
+
+            # Put the box slightly to the right of the
+            # final sequential measurement.
 
             box_position = (
                 x_max_seq
@@ -345,7 +354,7 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # ADD BOX-AND-WHISKER PLOT
+            # ADD VERTICAL BOX-AND-WHISKER PLOT
             # =================================================
 
             ax1.bxp(
@@ -374,12 +383,32 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # X-AXIS LIMIT
+            # X-AXIS LIMITS
             # =================================================
 
             ax1.set_xlim(
                 x_min_seq - 0.03 * x_range,
                 box_position + 0.10 * x_range
+            )
+
+
+            # =================================================
+            # REMOVE THE X VALUE UNDER THE BOX PLOT
+            # =================================================
+
+            # Get automatically generated x-axis tick locations.
+            current_ticks = ax1.get_xticks()
+
+            # Keep only ticks that belong to the sequential-data
+            # region. The artificial x-position used for the box
+            # is therefore not displayed on the x-axis.
+            seq_ticks = current_ticks[
+                (current_ticks >= x_min_seq)
+                & (current_ticks <= x_max_seq)
+            ]
+
+            ax1.set_xticks(
+                seq_ticks
             )
 
 
@@ -431,9 +460,8 @@ if seq_file is not None and valid_seq_summary:
             )
 
             plt.close(fig1)
-            
 # ============================================================
-# SECTION 1 — BOX-AND-WHISKER PLOT
+# SECTION 2 — BOX-AND-WHISKER PLOT
 # ============================================================
 
 st.header("Section 2: Box-and-Whisker Plot")
