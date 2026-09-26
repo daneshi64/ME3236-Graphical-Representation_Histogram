@@ -22,10 +22,10 @@ st.write(
 )
 
 # ============================================================
-# SECTION 3 — SEQUENTIAL PLOT + BOX-AND-WHISKER PLOT
+# SECTION 1 — SEQUENTIAL PLOT + BOX-AND-WHISKER PLOT
 # ============================================================
 
-st.header("Section 3: Sequential Plot + Box-and-Whisker Plot")
+st.header("Section 1: Sequential Plot + Box-and-Whisker Plot")
 
 st.write(
     "Upload a CSV file with no header. The first column should "
@@ -34,7 +34,8 @@ st.write(
 )
 
 st.write(
-    "Enter the statistical values that you calculated from your data."
+    "Enter the five-number summary and sample standard deviation "
+    "that you calculated from your data."
 )
 
 
@@ -72,8 +73,7 @@ seq_file = st.file_uploader(
 
 st.subheader("Enter Statistical Values")
 
-# First row
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     seq_min = st.number_input(
@@ -99,6 +99,9 @@ with col3:
         key="seq_median"
     )
 
+
+col4, col5, col6 = st.columns(3)
+
 with col4:
     seq_q3 = st.number_input(
         "Q3",
@@ -106,10 +109,6 @@ with col4:
         format="%.6g",
         key="seq_q3"
     )
-
-
-# Second row
-col5, col6, col7, col8 = st.columns(4)
 
 with col5:
     seq_max = st.number_input(
@@ -120,14 +119,6 @@ with col5:
     )
 
 with col6:
-    seq_mean = st.number_input(
-        "Sample Mean",
-        value=2.0,
-        format="%.6g",
-        key="seq_mean"
-    )
-
-with col7:
     seq_std = st.number_input(
         "Sample Standard Deviation",
         min_value=0.0,
@@ -176,7 +167,7 @@ if seq_file is not None and valid_seq_summary:
 
     else:
 
-        # Keep only first two columns
+        # Keep only the first two columns
         seq_df = seq_df.iloc[:, :2]
 
         seq_df.columns = [
@@ -218,7 +209,7 @@ if seq_file is not None and valid_seq_summary:
         else:
 
             # ------------------------------------------------
-            # Extract x and y data
+            # Extract x and y
             # ------------------------------------------------
 
             seq_x = seq_df[
@@ -244,14 +235,14 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # CREATE COMBINED FIGURE
+            # CREATE FIGURE
             # =================================================
 
             st.subheader(
                 "Sequential Plot + Box-and-Whisker Plot"
             )
 
-            fig3, ax3 = plt.subplots(
+            fig1, ax1 = plt.subplots(
                 figsize=(9, 5)
             )
 
@@ -260,19 +251,22 @@ if seq_file is not None and valid_seq_summary:
             # SEQUENTIAL PLOT
             # =================================================
 
-            ax3.plot(
+            ax1.plot(
                 seq_x,
                 seq_y,
                 marker="o",
                 linestyle="-",
-                markersize=3,
+                markersize=6,
+                markerfacecolor="none",
+                markeredgecolor="black",
+                markeredgewidth=1.0,
                 linewidth=0.8,
                 color="black"
             )
 
 
             # =================================================
-            # DATA RANGE
+            # X DATA RANGE
             # =================================================
 
             x_min_seq = np.min(seq_x)
@@ -288,12 +282,12 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # MEAN AND ± STANDARD DEVIATION LINES
+            # MEDIAN AND ± STANDARD DEVIATION LINES
             # =================================================
 
-            # Sample mean
-            ax3.hlines(
-                y=seq_mean,
+            # Median (Q2)
+            ax1.hlines(
+                y=seq_median,
                 xmin=x_min_seq,
                 xmax=x_max_seq,
                 colors="black",
@@ -301,9 +295,9 @@ if seq_file is not None and valid_seq_summary:
                 linewidth=1.2
             )
 
-            # Mean + one standard deviation
-            ax3.hlines(
-                y=seq_mean + seq_std,
+            # Median + one standard deviation
+            ax1.hlines(
+                y=seq_median + seq_std,
                 xmin=x_min_seq,
                 xmax=x_max_seq,
                 colors="black",
@@ -311,9 +305,9 @@ if seq_file is not None and valid_seq_summary:
                 linewidth=1.0
             )
 
-            # Mean - one standard deviation
-            ax3.hlines(
-                y=seq_mean - seq_std,
+            # Median - one standard deviation
+            ax1.hlines(
+                y=seq_median - seq_std,
                 xmin=x_min_seq,
                 xmax=x_max_seq,
                 colors="black",
@@ -323,7 +317,7 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # BOX-PLOT POSITION
+            # POSITION OF BOX-AND-WHISKER PLOT
             # =================================================
 
             box_position = (
@@ -351,10 +345,10 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # ADD VERTICAL BOX-AND-WHISKER PLOT
+            # ADD BOX-AND-WHISKER PLOT
             # =================================================
 
-            ax3.bxp(
+            ax1.bxp(
                 box_stats,
                 positions=[box_position],
                 widths=box_width,
@@ -368,12 +362,12 @@ if seq_file is not None and valid_seq_summary:
             # AXIS LABELS
             # =================================================
 
-            ax3.set_xlabel(
+            ax1.set_xlabel(
                 seq_x_label,
                 fontsize=11
             )
 
-            ax3.set_ylabel(
+            ax1.set_ylabel(
                 seq_y_label,
                 fontsize=11
             )
@@ -381,9 +375,9 @@ if seq_file is not None and valid_seq_summary:
 
             # =================================================
             # X-AXIS LIMIT
-            # ============================================================
+            # =================================================
 
-            ax3.set_xlim(
+            ax1.set_xlim(
                 x_min_seq - 0.03 * x_range,
                 box_position + 0.10 * x_range
             )
@@ -393,7 +387,7 @@ if seq_file is not None and valid_seq_summary:
             # GRID
             # =================================================
 
-            ax3.grid(
+            ax1.grid(
                 True,
                 axis="y",
                 alpha=0.3
@@ -404,45 +398,45 @@ if seq_file is not None and valid_seq_summary:
             # FINISH FIGURE
             # =================================================
 
-            fig3.tight_layout()
+            fig1.tight_layout()
 
-            st.pyplot(fig3)
+            st.pyplot(fig1)
 
 
             # =================================================
             # DOWNLOAD FIGURE
             # =================================================
 
-            buffer3 = BytesIO()
+            buffer1 = BytesIO()
 
-            fig3.savefig(
-                buffer3,
+            fig1.savefig(
+                buffer1,
                 format="png",
                 dpi=300,
                 bbox_inches="tight"
             )
 
-            buffer3.seek(0)
+            buffer1.seek(0)
 
             st.download_button(
                 label=(
                     "Download Sequential Plot + "
                     "Box-and-Whisker Plot"
                 ),
-                data=buffer3,
+                data=buffer1,
                 file_name=(
                     "sequential_box_whisker_plot.png"
                 ),
                 mime="image/png"
             )
 
-            plt.close(fig3)
+            plt.close(fig1)
             
 # ============================================================
 # SECTION 1 — BOX-AND-WHISKER PLOT
 # ============================================================
 
-st.header("Section 1: Box-and-Whisker Plot")
+st.header("Section 2: Box-and-Whisker Plot")
 
 st.write(
     "Enter your five-number summary and the data label."
@@ -592,7 +586,7 @@ else:
 # SECTION 2 — HISTOGRAM
 # ============================================================
 
-st.header("Section 2: Histogram")
+st.header("Section 3: Histogram")
 
 st.write(
     "Upload a CSV file with no header. The columns should contain:"
