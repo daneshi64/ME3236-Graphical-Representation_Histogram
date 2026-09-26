@@ -990,3 +990,15 @@ if uploaded_file is not None:
     )
 
     plt.close(fig2)
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown("---")
+st.markdown(
+    "<div style='text-align: center; color: gray; font-size: 14px;'>"
+    "Created by Masoud Daneshi | ME 3236"
+    "</div>",
+    unsafe_allow_html=True
+)
