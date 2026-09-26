@@ -21,7 +21,423 @@ st.write(
     "have already calculated."
 )
 
+# ============================================================
+# SECTION 3 — SEQUENTIAL PLOT + BOX-AND-WHISKER PLOT
+# ============================================================
 
+st.header("Section 3: Sequential Plot + Box-and-Whisker Plot")
+
+st.write(
+    "Upload a CSV file with no header. The first column should "
+    "contain the measurement number or location, and the second "
+    "column should contain the measured value."
+)
+
+st.write(
+    "Enter the statistical values that you calculated from your data."
+)
+
+
+# ------------------------------------------------------------
+# Labels
+# ------------------------------------------------------------
+
+seq_x_label = st.text_input(
+    "X-axis label",
+    placeholder="e.g., Measurement Number, i",
+    key="seq_x_label"
+)
+
+seq_y_label = st.text_input(
+    "Data label (include the unit if applicable)",
+    placeholder="e.g., Resistance, R (kΩ)",
+    key="seq_y_label"
+)
+
+
+# ------------------------------------------------------------
+# Upload CSV
+# ------------------------------------------------------------
+
+seq_file = st.file_uploader(
+    "Upload sequential-data CSV file",
+    type=["csv"],
+    key="seq_file"
+)
+
+
+# ============================================================
+# ENTER STATISTICAL VALUES
+# ============================================================
+
+st.subheader("Enter Statistical Values")
+
+# First row
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    seq_min = st.number_input(
+        "Minimum",
+        value=0.0,
+        format="%.6g",
+        key="seq_min"
+    )
+
+with col2:
+    seq_q1 = st.number_input(
+        "Q1",
+        value=1.0,
+        format="%.6g",
+        key="seq_q1"
+    )
+
+with col3:
+    seq_median = st.number_input(
+        "Median (Q2)",
+        value=2.0,
+        format="%.6g",
+        key="seq_median"
+    )
+
+with col4:
+    seq_q3 = st.number_input(
+        "Q3",
+        value=3.0,
+        format="%.6g",
+        key="seq_q3"
+    )
+
+
+# Second row
+col5, col6, col7, col8 = st.columns(4)
+
+with col5:
+    seq_max = st.number_input(
+        "Maximum",
+        value=4.0,
+        format="%.6g",
+        key="seq_max"
+    )
+
+with col6:
+    seq_mean = st.number_input(
+        "Sample Mean",
+        value=2.0,
+        format="%.6g",
+        key="seq_mean"
+    )
+
+with col7:
+    seq_std = st.number_input(
+        "Sample Standard Deviation",
+        min_value=0.0,
+        value=1.0,
+        format="%.6g",
+        key="seq_std"
+    )
+
+
+# ============================================================
+# CHECK FIVE-NUMBER SUMMARY
+# ============================================================
+
+valid_seq_summary = (
+    seq_min <= seq_q1 <= seq_median <= seq_q3 <= seq_max
+)
+
+if not valid_seq_summary:
+
+    st.warning(
+        "The five-number summary must satisfy: "
+        "Minimum ≤ Q1 ≤ Median ≤ Q3 ≤ Maximum."
+    )
+
+
+# ============================================================
+# READ CSV AND CREATE FIGURE
+# ============================================================
+
+if seq_file is not None and valid_seq_summary:
+
+    # --------------------------------------------------------
+    # Read headerless CSV
+    # --------------------------------------------------------
+
+    seq_df = pd.read_csv(
+        seq_file,
+        header=None
+    )
+
+    if seq_df.shape[1] < 2:
+
+        st.error(
+            "The CSV file must contain at least two columns."
+        )
+
+    else:
+
+        # Keep only first two columns
+        seq_df = seq_df.iloc[:, :2]
+
+        seq_df.columns = [
+            "Index / Location",
+            "Data"
+        ]
+
+
+        # ----------------------------------------------------
+        # Convert columns to numeric
+        # ----------------------------------------------------
+
+        seq_df["Index / Location"] = pd.to_numeric(
+            seq_df["Index / Location"],
+            errors="coerce"
+        )
+
+        seq_df["Data"] = pd.to_numeric(
+            seq_df["Data"],
+            errors="coerce"
+        )
+
+
+        # Remove invalid rows
+        seq_df = seq_df.dropna(
+            subset=[
+                "Index / Location",
+                "Data"
+            ]
+        )
+
+
+        if len(seq_df) == 0:
+
+            st.error(
+                "No valid numeric data were found."
+            )
+
+        else:
+
+            # ------------------------------------------------
+            # Extract x and y data
+            # ------------------------------------------------
+
+            seq_x = seq_df[
+                "Index / Location"
+            ].to_numpy()
+
+            seq_y = seq_df[
+                "Data"
+            ].to_numpy()
+
+
+            # ------------------------------------------------
+            # Show imported data
+            # ------------------------------------------------
+
+            st.subheader("Imported Sequential Data")
+
+            st.dataframe(
+                seq_df,
+                hide_index=True,
+                use_container_width=True
+            )
+
+
+            # =================================================
+            # CREATE COMBINED FIGURE
+            # =================================================
+
+            st.subheader(
+                "Sequential Plot + Box-and-Whisker Plot"
+            )
+
+            fig3, ax3 = plt.subplots(
+                figsize=(9, 5)
+            )
+
+
+            # =================================================
+            # SEQUENTIAL PLOT
+            # =================================================
+
+            ax3.plot(
+                seq_x,
+                seq_y,
+                marker="o",
+                linestyle="-",
+                markersize=3,
+                linewidth=0.8,
+                color="black"
+            )
+
+
+            # =================================================
+            # DATA RANGE
+            # =================================================
+
+            x_min_seq = np.min(seq_x)
+            x_max_seq = np.max(seq_x)
+
+            x_range = (
+                x_max_seq - x_min_seq
+            )
+
+            # Prevent problems if all x values are identical
+            if x_range == 0:
+                x_range = 1.0
+
+
+            # =================================================
+            # MEAN AND ± STANDARD DEVIATION LINES
+            # =================================================
+
+            # Sample mean
+            ax3.hlines(
+                y=seq_mean,
+                xmin=x_min_seq,
+                xmax=x_max_seq,
+                colors="black",
+                linestyles="-",
+                linewidth=1.2
+            )
+
+            # Mean + one standard deviation
+            ax3.hlines(
+                y=seq_mean + seq_std,
+                xmin=x_min_seq,
+                xmax=x_max_seq,
+                colors="black",
+                linestyles="--",
+                linewidth=1.0
+            )
+
+            # Mean - one standard deviation
+            ax3.hlines(
+                y=seq_mean - seq_std,
+                xmin=x_min_seq,
+                xmax=x_max_seq,
+                colors="black",
+                linestyles="--",
+                linewidth=1.0
+            )
+
+
+            # =================================================
+            # BOX-PLOT POSITION
+            # =================================================
+
+            box_position = (
+                x_max_seq
+                + 0.10 * x_range
+            )
+
+            box_width = (
+                0.07 * x_range
+            )
+
+
+            # =================================================
+            # BOX-AND-WHISKER STATISTICS
+            # =================================================
+
+            box_stats = [{
+                "med": seq_median,
+                "q1": seq_q1,
+                "q3": seq_q3,
+                "whislo": seq_min,
+                "whishi": seq_max,
+                "fliers": []
+            }]
+
+
+            # =================================================
+            # ADD VERTICAL BOX-AND-WHISKER PLOT
+            # =================================================
+
+            ax3.bxp(
+                box_stats,
+                positions=[box_position],
+                widths=box_width,
+                vert=True,
+                showfliers=False,
+                patch_artist=False
+            )
+
+
+            # =================================================
+            # AXIS LABELS
+            # =================================================
+
+            ax3.set_xlabel(
+                seq_x_label,
+                fontsize=11
+            )
+
+            ax3.set_ylabel(
+                seq_y_label,
+                fontsize=11
+            )
+
+
+            # =================================================
+            # X-AXIS LIMIT
+            # ============================================================
+
+            ax3.set_xlim(
+                x_min_seq - 0.03 * x_range,
+                box_position + 0.10 * x_range
+            )
+
+
+            # =================================================
+            # GRID
+            # =================================================
+
+            ax3.grid(
+                True,
+                axis="y",
+                alpha=0.3
+            )
+
+
+            # =================================================
+            # FINISH FIGURE
+            # =================================================
+
+            fig3.tight_layout()
+
+            st.pyplot(fig3)
+
+
+            # =================================================
+            # DOWNLOAD FIGURE
+            # =================================================
+
+            buffer3 = BytesIO()
+
+            fig3.savefig(
+                buffer3,
+                format="png",
+                dpi=300,
+                bbox_inches="tight"
+            )
+
+            buffer3.seek(0)
+
+            st.download_button(
+                label=(
+                    "Download Sequential Plot + "
+                    "Box-and-Whisker Plot"
+                ),
+                data=buffer3,
+                file_name=(
+                    "sequential_box_whisker_plot.png"
+                ),
+                mime="image/png"
+            )
+
+            plt.close(fig3)
+            
 # ============================================================
 # SECTION 1 — BOX-AND-WHISKER PLOT
 # ============================================================
