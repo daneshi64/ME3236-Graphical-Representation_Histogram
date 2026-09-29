@@ -1,3 +1,27 @@
+import streamlit as st
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from io import BytesIO
+
+
+# ============================================================
+# PAGE SETUP
+# ============================================================
+
+st.set_page_config(
+    page_title="Statistical Plotting Tool",
+    layout="centered"
+)
+
+st.title("Statistical Plotting Tool")
+
+st.write(
+    "This tool creates plots from statistical results that you "
+    "have already calculated."
+)
+
+
 # ============================================================
 # SECTION 1 — SEQUENTIAL PLOT + BOX-AND-WHISKER PLOT
 # ============================================================
@@ -38,9 +62,9 @@ seq_file = st.file_uploader(
 )
 
 
-# ============================================================
+# ------------------------------------------------------------
 # ENTER STATISTICAL VALUES
-# ============================================================
+# ------------------------------------------------------------
 
 st.subheader("Enter Statistical Values")
 
@@ -107,9 +131,9 @@ with col7:
     )
 
 
-# ============================================================
+# ------------------------------------------------------------
 # CHECK FIVE-NUMBER SUMMARY
-# ============================================================
+# ------------------------------------------------------------
 
 valid_seq_summary = (
     seq_min <= seq_q1 <= seq_median <= seq_q3 <= seq_max
@@ -123,15 +147,11 @@ if not valid_seq_summary:
     )
 
 
-# ============================================================
+# ------------------------------------------------------------
 # READ CSV AND CREATE FIGURE
-# ============================================================
+# ------------------------------------------------------------
 
 if seq_file is not None and valid_seq_summary:
-
-    # --------------------------------------------------------
-    # READ HEADERLESS CSV
-    # --------------------------------------------------------
 
     seq_df = pd.read_csv(
         seq_file,
@@ -146,7 +166,7 @@ if seq_file is not None and valid_seq_summary:
 
     else:
 
-        # Keep only the first two columns
+        # Keep only first two columns
         seq_df = seq_df.iloc[:, :2]
 
         seq_df.columns = [
@@ -154,11 +174,7 @@ if seq_file is not None and valid_seq_summary:
             "Data"
         ]
 
-
-        # ----------------------------------------------------
-        # CONVERT COLUMNS TO NUMERIC
-        # ----------------------------------------------------
-
+        # Convert to numeric
         seq_df["Measurement Number"] = pd.to_numeric(
             seq_df["Measurement Number"],
             errors="coerce"
@@ -169,7 +185,6 @@ if seq_file is not None and valid_seq_summary:
             errors="coerce"
         )
 
-
         # Remove invalid rows
         seq_df = seq_df.dropna(
             subset=[
@@ -178,7 +193,6 @@ if seq_file is not None and valid_seq_summary:
             ]
         )
 
-
         if len(seq_df) == 0:
 
             st.error(
@@ -186,10 +200,6 @@ if seq_file is not None and valid_seq_summary:
             )
 
         else:
-
-            # ------------------------------------------------
-            # EXTRACT DATA
-            # ------------------------------------------------
 
             seq_x = seq_df[
                 "Measurement Number"
@@ -213,9 +223,9 @@ if seq_file is not None and valid_seq_summary:
             )
 
 
-            # =================================================
+            # ------------------------------------------------
             # CREATE FIGURE
-            # =================================================
+            # ------------------------------------------------
 
             st.subheader(
                 "Sequential Plot + Box-and-Whisker Plot"
@@ -226,9 +236,9 @@ if seq_file is not None and valid_seq_summary:
             )
 
 
-            # =================================================
+            # ------------------------------------------------
             # SEQUENTIAL PLOT
-            # =================================================
+            # ------------------------------------------------
 
             ax1.plot(
                 seq_x,
@@ -248,44 +258,44 @@ if seq_file is not None and valid_seq_summary:
             )
 
 
-            # =================================================
+            # ------------------------------------------------
             # SAMPLE MEAN AND ± STANDARD DEVIATION
-            # ============================================================
+            # ------------------------------------------------
 
-            # Mean
+            # Sample mean
             ax1.hlines(
                 y=seq_mean,
                 xmin=0,
                 xmax=100,
-                colors="black",
+                colors="gray",
                 linestyles="--",
-                linewidth=1.2
+                linewidth=0.8
             )
 
-            # Mean + standard deviation
+            # Sample mean + standard deviation
             ax1.hlines(
                 y=seq_mean + seq_std,
                 xmin=0,
                 xmax=100,
-                colors="black",
-                linestyles=":",
-                linewidth=1.2
+                colors="gray",
+                linestyles="--",
+                linewidth=0.8
             )
 
-            # Mean - standard deviation
+            # Sample mean - standard deviation
             ax1.hlines(
                 y=seq_mean - seq_std,
                 xmin=0,
                 xmax=100,
-                colors="black",
-                linestyles=":",
-                linewidth=1.2
+                colors="gray",
+                linestyles="--",
+                linewidth=0.8
             )
 
 
-            # =================================================
+            # ------------------------------------------------
             # BOX-AND-WHISKER STATISTICS
-            # ============================================================
+            # ------------------------------------------------
 
             box_stats = [{
                 "med": seq_median,
@@ -297,13 +307,13 @@ if seq_file is not None and valid_seq_summary:
             }]
 
 
-            # =================================================
+            # ------------------------------------------------
             # ADD BOX-AND-WHISKER PLOT
-            # ============================================================
+            # ------------------------------------------------
 
-            # Following the Appendix 2 example:
-            # box centered at x = 110 and extending
-            # approximately from x = 105 to x = 115.
+            # Box is centered at measurement number 110.
+            # Width = 10, so the box extends approximately
+            # from 105 to 115.
 
             ax1.bxp(
                 box_stats,
@@ -315,9 +325,9 @@ if seq_file is not None and valid_seq_summary:
             )
 
 
-            # =================================================
-            # X-AXIS — MATCH APPENDIX 2
-            # ============================================================
+            # ------------------------------------------------
+            # X-AXIS
+            # ------------------------------------------------
 
             ax1.set_xlim(
                 0,
@@ -334,9 +344,9 @@ if seq_file is not None and valid_seq_summary:
             )
 
 
-            # =================================================
+            # ------------------------------------------------
             # Y-AXIS
-            # ============================================================
+            # ------------------------------------------------
 
             ax1.set_ylabel(
                 seq_y_label,
@@ -344,9 +354,9 @@ if seq_file is not None and valid_seq_summary:
             )
 
 
-            # =================================================
+            # ------------------------------------------------
             # TICK LABEL SIZE
-            # ============================================================
+            # ------------------------------------------------
 
             ax1.tick_params(
                 axis="both",
@@ -354,9 +364,9 @@ if seq_file is not None and valid_seq_summary:
             )
 
 
-            # =================================================
+            # ------------------------------------------------
             # GRID
-            # ============================================================
+            # ------------------------------------------------
 
             ax1.grid(
                 True,
@@ -365,18 +375,18 @@ if seq_file is not None and valid_seq_summary:
             )
 
 
-            # =================================================
+            # ------------------------------------------------
             # FINISH FIGURE
-            # ============================================================
+            # ------------------------------------------------
 
             fig1.tight_layout()
 
             st.pyplot(fig1)
 
 
-            # =================================================
+            # ------------------------------------------------
             # DOWNLOAD FIGURE
-            # ============================================================
+            # ------------------------------------------------
 
             buffer1 = BytesIO()
 
@@ -395,13 +405,13 @@ if seq_file is not None and valid_seq_summary:
                     "Box-and-Whisker Plot"
                 ),
                 data=buffer1,
-                file_name=(
-                    "sequential_box_whisker_plot.png"
-                ),
+                file_name="sequential_box_whisker_plot.png",
                 mime="image/png"
             )
 
             plt.close(fig1)
+
+
 # ============================================================
 # SECTION 2 — BOX-AND-WHISKER PLOT
 # ============================================================
@@ -414,7 +424,7 @@ st.write(
 
 
 # ------------------------------------------------------------
-# Data label
+# DATA LABEL
 # ------------------------------------------------------------
 
 box_label = st.text_input(
@@ -425,7 +435,7 @@ box_label = st.text_input(
 
 
 # ------------------------------------------------------------
-# Five-number summary
+# FIVE-NUMBER SUMMARY
 # ------------------------------------------------------------
 
 col1, col2, col3, col4, col5 = st.columns(5)
@@ -434,40 +444,45 @@ with col1:
     minimum = st.number_input(
         "Minimum",
         value=0.0,
-        format="%.6g"
+        format="%.6g",
+        key="box_min"
     )
 
 with col2:
     q1 = st.number_input(
         "Q1",
         value=1.0,
-        format="%.6g"
+        format="%.6g",
+        key="box_q1"
     )
 
 with col3:
     median = st.number_input(
         "Median",
         value=2.0,
-        format="%.6g"
+        format="%.6g",
+        key="box_median"
     )
 
 with col4:
     q3 = st.number_input(
         "Q3",
         value=3.0,
-        format="%.6g"
+        format="%.6g",
+        key="box_q3"
     )
 
 with col5:
     maximum = st.number_input(
         "Maximum",
         value=4.0,
-        format="%.6g"
+        format="%.6g",
+        key="box_max"
     )
 
 
 # ------------------------------------------------------------
-# Check order of five-number summary
+# CHECK ORDER
 # ------------------------------------------------------------
 
 valid_summary = (
@@ -483,17 +498,12 @@ if not valid_summary:
 
 else:
 
-    # --------------------------------------------------------
-    # Create box-and-whisker plot from entered statistics
-    # --------------------------------------------------------
-
     st.subheader("Box-and-Whisker Plot")
 
-    fig1, ax1 = plt.subplots(
+    fig_box, ax_box = plt.subplots(
         figsize=(8, 3)
     )
 
-    # Matplotlib boxplot statistics
     box_stats = [{
         "med": median,
         "q1": q1,
@@ -503,57 +513,57 @@ else:
         "fliers": []
     }]
 
-    ax1.bxp(
+    ax_box.bxp(
         box_stats,
         vert=False,
         showfliers=False,
         widths=0.45
     )
 
-    ax1.set_xlabel(
+    ax_box.set_xlabel(
         box_label
     )
 
-    ax1.set_yticks([])
+    ax_box.set_yticks([])
 
-    ax1.grid(
+    ax_box.grid(
         True,
         axis="x",
         alpha=0.3
     )
 
-    fig1.tight_layout()
+    fig_box.tight_layout()
 
-    st.pyplot(fig1)
+    st.pyplot(fig_box)
 
 
     # --------------------------------------------------------
-    # Download box plot
+    # DOWNLOAD BOX PLOT
     # --------------------------------------------------------
 
-    buffer1 = BytesIO()
+    buffer_box = BytesIO()
 
-    fig1.savefig(
-        buffer1,
+    fig_box.savefig(
+        buffer_box,
         format="png",
         dpi=300,
         bbox_inches="tight"
     )
 
-    buffer1.seek(0)
+    buffer_box.seek(0)
 
     st.download_button(
         label="Download Box-and-Whisker Plot",
-        data=buffer1,
+        data=buffer_box,
         file_name="box_whisker_plot.png",
         mime="image/png"
     )
 
-    plt.close(fig1)
+    plt.close(fig_box)
 
 
 # ============================================================
-# SECTION 2 — HISTOGRAM
+# SECTION 3 — HISTOGRAM
 # ============================================================
 
 st.header("Section 3: Histogram")
@@ -577,7 +587,7 @@ st.write(
 
 
 # ------------------------------------------------------------
-# Histogram label
+# HISTOGRAM LABEL
 # ------------------------------------------------------------
 
 hist_label = st.text_input(
@@ -588,19 +598,20 @@ hist_label = st.text_input(
 
 
 # ------------------------------------------------------------
-# Upload histogram CSV
+# UPLOAD HISTOGRAM CSV
 # ------------------------------------------------------------
 
 uploaded_file = st.file_uploader(
     "Upload histogram CSV file",
-    type=["csv"]
+    type=["csv"],
+    key="hist_file"
 )
 
 
 if uploaded_file is not None:
 
     # --------------------------------------------------------
-    # Read CSV
+    # READ CSV
     # --------------------------------------------------------
 
     df = pd.read_csv(
@@ -610,7 +621,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Check number of columns
+    # CHECK NUMBER OF COLUMNS
     # --------------------------------------------------------
 
     if df.shape[1] < 2:
@@ -636,7 +647,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Assign column names
+    # ASSIGN COLUMN NAMES
     # --------------------------------------------------------
 
     if df.shape[1] == 2:
@@ -660,7 +671,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Convert columns to numeric
+    # CONVERT TO NUMERIC
     # --------------------------------------------------------
 
     df["Bin Center"] = pd.to_numeric(
@@ -682,7 +693,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Remove invalid rows
+    # REMOVE INVALID ROWS
     # --------------------------------------------------------
 
     required_columns = [
@@ -702,7 +713,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Check data
+    # CHECK DATA
     # --------------------------------------------------------
 
     if len(df) < 2:
@@ -715,7 +726,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Sort according to bin center
+    # SORT BY BIN CENTER
     # --------------------------------------------------------
 
     df = df.sort_values(
@@ -724,23 +735,27 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Extract data
+    # EXTRACT DATA
     # --------------------------------------------------------
 
-    bin_centers = df["Bin Center"].to_numpy()
+    bin_centers = df[
+        "Bin Center"
+    ].to_numpy()
 
-    frequencies = df["Frequency"].to_numpy()
+    frequencies = df[
+        "Frequency"
+    ].to_numpy()
 
     if has_relative_frequency:
 
-        relative_frequencies = (
-            df["Relative Frequency"].to_numpy()
-        )
+        relative_frequencies = df[
+            "Relative Frequency"
+        ].to_numpy()
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # CALCULATE BIN SIZE
-    # ========================================================
+    # --------------------------------------------------------
 
     differences = np.diff(
         bin_centers
@@ -750,7 +765,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Check whether bin spacing is uniform
+    # CHECK UNIFORM BIN SPACING
     # --------------------------------------------------------
 
     uniform_bins = np.allclose(
@@ -759,7 +774,6 @@ if uploaded_file is not None:
         rtol=1e-5,
         atol=1e-8
     )
-
 
     if not uniform_bins:
 
@@ -772,7 +786,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Display imported data
+    # DISPLAY DATA
     # --------------------------------------------------------
 
     st.subheader("Imported Histogram Data")
@@ -782,11 +796,6 @@ if uploaded_file is not None:
         hide_index=True,
         use_container_width=True
     )
-
-
-    # --------------------------------------------------------
-    # Display bin size
-    # --------------------------------------------------------
 
     st.write(
         f"Bin size: **{bin_size:.6g}**"
@@ -805,7 +814,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Plot frequency bars
+    # FREQUENCY BARS
     # --------------------------------------------------------
 
     ax_left.bar(
@@ -820,14 +829,13 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # X-axis
+    # X-AXIS
     # --------------------------------------------------------
 
     ax_left.set_xlabel(
         hist_label
     )
 
-    # Bin centers appear as x-axis values
     ax_left.set_xticks(
         bin_centers
     )
@@ -842,7 +850,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Left y-axis
+    # LEFT Y-AXIS
     # --------------------------------------------------------
 
     ax_left.set_ylabel(
@@ -856,14 +864,11 @@ if uploaded_file is not None:
     )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # OPTIONAL RIGHT Y-AXIS
-    # ========================================================
+    # --------------------------------------------------------
 
     if has_relative_frequency:
-
-        # Determine conversion between frequency
-        # and relative frequency from the uploaded data.
 
         valid = frequencies > 0
 
@@ -878,7 +883,6 @@ if uploaded_file is not None:
                 conversion_factors
             )
 
-            # Create right y-axis
             ax_right = ax_left.twinx()
 
             ymin, ymax = ax_left.get_ylim()
@@ -901,7 +905,7 @@ if uploaded_file is not None:
 
 
     # --------------------------------------------------------
-    # Finish figure
+    # FINISH FIGURE
     # --------------------------------------------------------
 
     fig2.tight_layout()
@@ -909,9 +913,9 @@ if uploaded_file is not None:
     st.pyplot(fig2)
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # DOWNLOAD HISTOGRAM
-    # ========================================================
+    # --------------------------------------------------------
 
     buffer2 = BytesIO()
 
@@ -933,11 +937,13 @@ if uploaded_file is not None:
 
     plt.close(fig2)
 
+
 # ============================================================
 # FOOTER
 # ============================================================
 
 st.markdown("---")
+
 st.markdown(
     "<div style='text-align: center; color: gray; font-size: 14px;'>"
     "Created by Masoud Daneshi | ME 3236"
