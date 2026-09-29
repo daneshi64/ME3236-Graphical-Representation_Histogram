@@ -1,26 +1,3 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from io import BytesIO
-
-
-# ============================================================
-# PAGE SETUP
-# ============================================================
-
-st.set_page_config(
-    page_title="Statistical Plotting Tool",
-    layout="centered"
-)
-
-st.title("Statistical Plotting Tool")
-
-st.write(
-    "This tool creates plots from statistical results that you "
-    "have already calculated."
-)
-
 # ============================================================
 # SECTION 1 — SEQUENTIAL PLOT + BOX-AND-WHISKER PLOT
 # ============================================================
@@ -29,25 +6,19 @@ st.header("Section 1: Sequential Plot + Box-and-Whisker Plot")
 
 st.write(
     "Upload a CSV file with no header. The first column should "
-    "contain the measurement number or location, and the second "
-    "column should contain the measured value."
+    "contain the measurement number, and the second column should "
+    "contain the measured value."
 )
 
 st.write(
-    "Enter the five-number summary and sample standard deviation "
-    "that you calculated from your data."
+    "Enter the five-number summary, sample mean, and sample standard "
+    "deviation that you calculated from your data."
 )
 
 
 # ------------------------------------------------------------
-# LABELS
+# DATA LABEL
 # ------------------------------------------------------------
-
-seq_x_label = st.text_input(
-    "X-axis label",
-    placeholder="e.g., Measurement Number, i",
-    key="seq_x_label"
-)
 
 seq_y_label = st.text_input(
     "Data label (include the unit if applicable)",
@@ -73,7 +44,7 @@ seq_file = st.file_uploader(
 
 st.subheader("Enter Statistical Values")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     seq_min = st.number_input(
@@ -99,9 +70,6 @@ with col3:
         key="seq_median"
     )
 
-
-col4, col5, col6 = st.columns(3)
-
 with col4:
     seq_q3 = st.number_input(
         "Q3",
@@ -109,6 +77,9 @@ with col4:
         format="%.6g",
         key="seq_q3"
     )
+
+
+col5, col6, col7 = st.columns(3)
 
 with col5:
     seq_max = st.number_input(
@@ -119,6 +90,14 @@ with col5:
     )
 
 with col6:
+    seq_mean = st.number_input(
+        "Sample Mean",
+        value=2.0,
+        format="%.6g",
+        key="seq_mean"
+    )
+
+with col7:
     seq_std = st.number_input(
         "Sample Standard Deviation",
         min_value=0.0,
@@ -167,11 +146,11 @@ if seq_file is not None and valid_seq_summary:
 
     else:
 
-        # Keep only first two columns
+        # Keep only the first two columns
         seq_df = seq_df.iloc[:, :2]
 
         seq_df.columns = [
-            "Index / Location",
+            "Measurement Number",
             "Data"
         ]
 
@@ -180,8 +159,8 @@ if seq_file is not None and valid_seq_summary:
         # CONVERT COLUMNS TO NUMERIC
         # ----------------------------------------------------
 
-        seq_df["Index / Location"] = pd.to_numeric(
-            seq_df["Index / Location"],
+        seq_df["Measurement Number"] = pd.to_numeric(
+            seq_df["Measurement Number"],
             errors="coerce"
         )
 
@@ -194,7 +173,7 @@ if seq_file is not None and valid_seq_summary:
         # Remove invalid rows
         seq_df = seq_df.dropna(
             subset=[
-                "Index / Location",
+                "Measurement Number",
                 "Data"
             ]
         )
@@ -213,7 +192,7 @@ if seq_file is not None and valid_seq_summary:
             # ------------------------------------------------
 
             seq_x = seq_df[
-                "Index / Location"
+                "Measurement Number"
             ].to_numpy()
 
             seq_y = seq_df[
@@ -255,14 +234,14 @@ if seq_file is not None and valid_seq_summary:
                 seq_x,
                 seq_y,
 
-                # Open-circle symbols
+                # Large open-circle symbols
                 marker="o",
                 markersize=7,
                 markerfacecolor="none",
                 markeredgecolor="black",
                 markeredgewidth=1.2,
 
-                # Connecting line
+                # Thin connecting line
                 linestyle="-",
                 linewidth=0.8,
                 color="black"
@@ -270,78 +249,43 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # X DATA RANGE
-            # =================================================
+            # SAMPLE MEAN AND ± STANDARD DEVIATION
+            # ============================================================
 
-            x_min_seq = np.min(seq_x)
-            x_max_seq = np.max(seq_x)
-
-            x_range = (
-                x_max_seq - x_min_seq
-            )
-
-            # Prevent division/spacing problems
-            if x_range == 0:
-                x_range = 1.0
-
-
-            # =================================================
-            # MEDIAN AND ± STANDARD DEVIATION LINES
-            # =================================================
-
-            # Median
+            # Mean
             ax1.hlines(
-                y=seq_median,
-                xmin=x_min_seq,
-                xmax=x_max_seq,
+                y=seq_mean,
+                xmin=0,
+                xmax=100,
                 colors="black",
-                linestyles="-",
+                linestyles="--",
                 linewidth=1.2
             )
 
-
-            # Median + standard deviation
+            # Mean + standard deviation
             ax1.hlines(
-                y=seq_median + seq_std,
-                xmin=x_min_seq,
-                xmax=x_max_seq,
+                y=seq_mean + seq_std,
+                xmin=0,
+                xmax=100,
                 colors="black",
-                linestyles="--",
-                linewidth=1.0
+                linestyles=":",
+                linewidth=1.2
             )
 
-
-            # Median - standard deviation
+            # Mean - standard deviation
             ax1.hlines(
-                y=seq_median - seq_std,
-                xmin=x_min_seq,
-                xmax=x_max_seq,
+                y=seq_mean - seq_std,
+                xmin=0,
+                xmax=100,
                 colors="black",
-                linestyles="--",
-                linewidth=1.0
-            )
-
-
-            # =================================================
-            # POSITION OF BOX-AND-WHISKER PLOT
-            # =================================================
-
-            # Put the box slightly to the right of the
-            # final sequential measurement.
-
-            box_position = (
-                x_max_seq
-                + 0.10 * x_range
-            )
-
-            box_width = (
-                0.07 * x_range
+                linestyles=":",
+                linewidth=1.2
             )
 
 
             # =================================================
             # BOX-AND-WHISKER STATISTICS
-            # =================================================
+            # ============================================================
 
             box_stats = [{
                 "med": seq_median,
@@ -354,13 +298,17 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # ADD VERTICAL BOX-AND-WHISKER PLOT
-            # =================================================
+            # ADD BOX-AND-WHISKER PLOT
+            # ============================================================
+
+            # Following the Appendix 2 example:
+            # box centered at x = 110 and extending
+            # approximately from x = 105 to x = 115.
 
             ax1.bxp(
                 box_stats,
-                positions=[box_position],
-                widths=box_width,
+                positions=[110],
+                widths=10,
                 vert=True,
                 showfliers=False,
                 patch_artist=False
@@ -368,13 +316,27 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # AXIS LABELS
-            # =================================================
+            # X-AXIS — MATCH APPENDIX 2
+            # ============================================================
+
+            ax1.set_xlim(
+                0,
+                120
+            )
+
+            ax1.set_xticks(
+                [0, 20, 40, 60, 80, 100, 120]
+            )
 
             ax1.set_xlabel(
-                seq_x_label,
+                r"Measurement Number, $i$",
                 fontsize=11
             )
+
+
+            # =================================================
+            # Y-AXIS
+            # ============================================================
 
             ax1.set_ylabel(
                 seq_y_label,
@@ -383,38 +345,18 @@ if seq_file is not None and valid_seq_summary:
 
 
             # =================================================
-            # X-AXIS LIMITS
-            # =================================================
+            # TICK LABEL SIZE
+            # ============================================================
 
-            ax1.set_xlim(
-                x_min_seq - 0.03 * x_range,
-                box_position + 0.10 * x_range
-            )
-
-
-            # =================================================
-            # REMOVE THE X VALUE UNDER THE BOX PLOT
-            # =================================================
-
-            # Get automatically generated x-axis tick locations.
-            current_ticks = ax1.get_xticks()
-
-            # Keep only ticks that belong to the sequential-data
-            # region. The artificial x-position used for the box
-            # is therefore not displayed on the x-axis.
-            seq_ticks = current_ticks[
-                (current_ticks >= x_min_seq)
-                & (current_ticks <= x_max_seq)
-            ]
-
-            ax1.set_xticks(
-                seq_ticks
+            ax1.tick_params(
+                axis="both",
+                labelsize=10
             )
 
 
             # =================================================
             # GRID
-            # =================================================
+            # ============================================================
 
             ax1.grid(
                 True,
@@ -425,7 +367,7 @@ if seq_file is not None and valid_seq_summary:
 
             # =================================================
             # FINISH FIGURE
-            # =================================================
+            # ============================================================
 
             fig1.tight_layout()
 
@@ -434,7 +376,7 @@ if seq_file is not None and valid_seq_summary:
 
             # =================================================
             # DOWNLOAD FIGURE
-            # =================================================
+            # ============================================================
 
             buffer1 = BytesIO()
 
