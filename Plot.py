@@ -311,10 +311,6 @@ if seq_file is not None and valid_seq_summary:
             # ADD BOX-AND-WHISKER PLOT
             # ------------------------------------------------
 
-            # Box is centered at measurement number 110.
-            # Width = 10, so the box extends approximately
-            # from 105 to 115.
-
             ax1.bxp(
                 box_stats,
                 positions=[110],
@@ -329,19 +325,18 @@ if seq_file is not None and valid_seq_summary:
             # X-AXIS
             # ------------------------------------------------
 
+            # Keep the x-axis range so the box plot appears
+            # to the right of the sequential data.
             ax1.set_xlim(
                 0,
                 120
             )
 
-            ax1.set_xticks(
-                [0, 20, 40, 60, 80, 100, 120]
-            )
+            # Remove all x-axis ticks and numbers.
+            ax1.set_xticks([])
 
-            ax1.set_xlabel(
-                r"Measurement Number, $i$",
-                fontsize=11
-            )
+            # Remove x-axis label.
+            ax1.set_xlabel("")
 
 
             # ------------------------------------------------
@@ -359,7 +354,7 @@ if seq_file is not None and valid_seq_summary:
             # ------------------------------------------------
 
             ax1.tick_params(
-                axis="both",
+                axis="y",
                 labelsize=10
             )
 
@@ -802,9 +797,9 @@ if uploaded_file is not None:
     )
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # CREATE HISTOGRAM
-    # ========================================================
+    # --------------------------------------------------------
 
     st.subheader("Histogram")
 
@@ -836,6 +831,7 @@ if uploaded_file is not None:
         hist_label
     )
 
+    # Show bin centers as x-axis values
     ax_left.set_xticks(
         bin_centers
     )
