@@ -973,9 +973,9 @@ test_file = st.file_uploader(
 )
 
 
-# ============================================================
-# ENTER STATISTICAL VALUES
-# ============================================================
+# ------------------------------------------------------------
+# STATISTICAL VALUES
+# ------------------------------------------------------------
 
 st.subheader("Enter Statistical Values")
 
@@ -1042,9 +1042,9 @@ with col7:
     )
 
 
-# ============================================================
-# CHECK FIVE-NUMBER SUMMARY
-# ============================================================
+# ------------------------------------------------------------
+# CHECK SUMMARY
+# ------------------------------------------------------------
 
 valid_test_summary = (
     test_min <= test_q1 <= test_median <= test_q3 <= test_max
@@ -1059,7 +1059,7 @@ if not valid_test_summary:
 
 
 # ============================================================
-# READ CSV AND CREATE FIGURE
+# READ DATA
 # ============================================================
 
 if test_file is not None and valid_test_summary:
@@ -1077,18 +1077,12 @@ if test_file is not None and valid_test_summary:
 
     else:
 
-        # Keep only the first two columns
         test_df = test_df.iloc[:, :2]
 
         test_df.columns = [
             "Measurement Number",
             "Data"
         ]
-
-
-        # ----------------------------------------------------
-        # CONVERT TO NUMERIC
-        # ----------------------------------------------------
 
         test_df["Measurement Number"] = pd.to_numeric(
             test_df["Measurement Number"],
@@ -1100,15 +1094,7 @@ if test_file is not None and valid_test_summary:
             errors="coerce"
         )
 
-
-        # Remove invalid rows
-        test_df = test_df.dropna(
-            subset=[
-                "Measurement Number",
-                "Data"
-            ]
-        )
-
+        test_df = test_df.dropna()
 
         if len(test_df) == 0:
 
@@ -1117,10 +1103,6 @@ if test_file is not None and valid_test_summary:
             )
 
         else:
-
-            # ------------------------------------------------
-            # EXTRACT DATA
-            # ------------------------------------------------
 
             test_x = test_df[
                 "Measurement Number"
@@ -1131,26 +1113,9 @@ if test_file is not None and valid_test_summary:
             ].to_numpy()
 
 
-            # ------------------------------------------------
-            # SHOW IMPORTED DATA
-            # ------------------------------------------------
-
-            st.subheader("Imported Sequential Data")
-
-            st.dataframe(
-                test_df,
-                hide_index=True,
-                use_container_width=True
-            )
-
-
             # =================================================
             # CREATE FIGURE
             # =================================================
-
-            st.subheader(
-                "Sequential Plot + Box-and-Whisker Plot"
-            )
 
             fig4, ax4 = plt.subplots(
                 figsize=(9, 5)
@@ -1158,21 +1123,17 @@ if test_file is not None and valid_test_summary:
 
 
             # =================================================
-            # SEQUENTIAL PLOT
-            # ============================================================
+            # SEQUENTIAL DATA
+            # =================================================
 
             ax4.plot(
                 test_x,
                 test_y,
-
-                # Large open-circle symbols
                 marker="o",
-                markersize=7,
+                markersize=6,
                 markerfacecolor="none",
                 markeredgecolor="black",
-                markeredgewidth=1.2,
-
-                # Thin connecting line
+                markeredgewidth=1.0,
                 linestyle="-",
                 linewidth=0.8,
                 color="black"
@@ -1180,34 +1141,31 @@ if test_file is not None and valid_test_summary:
 
 
             # =================================================
-            # SAMPLE MEAN AND ± STANDARD DEVIATION
-            # ============================================================
+            # MEAN AND ± STANDARD DEVIATION
+            # =================================================
 
-            # Sample mean
             ax4.hlines(
-                y=test_mean,
-                xmin=0,
-                xmax=100,
+                test_mean,
+                0,
+                100,
                 colors="gray",
                 linestyles="--",
                 linewidth=0.8
             )
 
-            # Sample mean + standard deviation
             ax4.hlines(
-                y=test_mean + test_std,
-                xmin=0,
-                xmax=100,
+                test_mean + test_std,
+                0,
+                100,
                 colors="gray",
                 linestyles="--",
                 linewidth=0.8
             )
 
-            # Sample mean - standard deviation
             ax4.hlines(
-                y=test_mean - test_std,
-                xmin=0,
-                xmax=100,
+                test_mean - test_std,
+                0,
+                100,
                 colors="gray",
                 linestyles="--",
                 linewidth=0.8
@@ -1215,54 +1173,109 @@ if test_file is not None and valid_test_summary:
 
 
             # =================================================
-            # BOX-AND-WHISKER STATISTICS
-            # ============================================================
-
-            test_box_stats = [{
-                "med": test_median,
-                "q1": test_q1,
-                "q3": test_q3,
-                "whislo": test_min,
-                "whishi": test_max,
-                "fliers": []
-            }]
-
-
+            # MANUAL BOX-AND-WHISKER
             # =================================================
-            # BOX-AND-WHISKER PLOT
-            # ============================================================
+            #
+            # We draw it manually so that it DOES NOT interfere
+            # with the x-axis ticks.
+            #
+            # Box centered at x = 110
+            # Box extends from x = 106 to x = 114
+            # =================================================
 
-            # Place the box at x = 110.
-            # Its width is 10, so it occupies approximately
-            # x = 105 to 115.
+            box_center = 110
+            box_half_width = 4
 
-            ax4.bxp(
-                test_box_stats,
-                positions=[110],
-                widths=10,
-                vert=True,
-                showfliers=False,
-                patch_artist=False
+            box_left = box_center - box_half_width
+            box_right = box_center + box_half_width
+
+
+            # -------------------------------------------------
+            # BOX: Q1 TO Q3
+            # -------------------------------------------------
+
+            rectangle = plt.Rectangle(
+                (box_left, test_q1),
+                2 * box_half_width,
+                test_q3 - test_q1,
+                fill=False,
+                edgecolor="black",
+                linewidth=1.2
+            )
+
+            ax4.add_patch(rectangle)
+
+
+            # -------------------------------------------------
+            # MEDIAN LINE
+            # -------------------------------------------------
+
+            ax4.hlines(
+                test_median,
+                box_left,
+                box_right,
+                colors="black",
+                linewidth=1.2
+            )
+
+
+            # -------------------------------------------------
+            # LOWER WHISKER
+            # -------------------------------------------------
+
+            ax4.vlines(
+                box_center,
+                test_min,
+                test_q1,
+                colors="black",
+                linewidth=1.2
+            )
+
+            ax4.hlines(
+                test_min,
+                box_center - 2,
+                box_center + 2,
+                colors="black",
+                linewidth=1.2
+            )
+
+
+            # -------------------------------------------------
+            # UPPER WHISKER
+            # -------------------------------------------------
+
+            ax4.vlines(
+                box_center,
+                test_q3,
+                test_max,
+                colors="black",
+                linewidth=1.2
+            )
+
+            ax4.hlines(
+                test_max,
+                box_center - 2,
+                box_center + 2,
+                colors="black",
+                linewidth=1.2
             )
 
 
             # =================================================
-            # X-AXIS
-            # ============================================================
-
-            # Sequential measurements occupy 1–100.
-            # The box is centered at 110.
-            # Extend the axis to 120 to provide space for it.
+            # X-AXIS — EXACT FORMAT WE WANT
+            # =================================================
 
             ax4.set_xlim(
                 0,
                 120
             )
 
-            # Glen-style major ticks.
-            # There is intentionally no tick at 110.
             ax4.set_xticks(
                 [0, 20, 40, 60, 80, 100, 120]
+            )
+
+            ax4.set_xticklabels(
+                ["0", "20", "40", "60", "80", "100", "120"]
             )
 
             ax4.set_xlabel(
@@ -1273,7 +1286,7 @@ if test_file is not None and valid_test_summary:
 
             # =================================================
             # Y-AXIS
-            # ============================================================
+            # =================================================
 
             ax4.set_ylabel(
                 test_y_label,
@@ -1282,8 +1295,8 @@ if test_file is not None and valid_test_summary:
 
 
             # =================================================
-            # TICK SIZE
-            # ============================================================
+            # TICKS
+            # =================================================
 
             ax4.tick_params(
                 axis="both",
@@ -1293,7 +1306,7 @@ if test_file is not None and valid_test_summary:
 
             # =================================================
             # GRID
-            # ============================================================
+            # =================================================
 
             ax4.grid(
                 True,
@@ -1303,8 +1316,8 @@ if test_file is not None and valid_test_summary:
 
 
             # =================================================
-            # FINISH FIGURE
-            # ============================================================
+            # FINISH
+            # =================================================
 
             fig4.tight_layout()
 
@@ -1312,8 +1325,8 @@ if test_file is not None and valid_test_summary:
 
 
             # =================================================
-            # DOWNLOAD FIGURE
-            # ============================================================
+            # DOWNLOAD
+            # =================================================
 
             buffer4 = BytesIO()
 
@@ -1327,10 +1340,7 @@ if test_file is not None and valid_test_summary:
             buffer4.seek(0)
 
             st.download_button(
-                label=(
-                    "Download Sequential Plot + "
-                    "Box-and-Whisker Plot"
-                ),
+                label="Download Test Plot",
                 data=buffer4,
                 file_name="section4_test_plot.png",
                 mime="image/png",
