@@ -933,7 +933,412 @@ if uploaded_file is not None:
 
     plt.close(fig2)
 
+# ============================================================
+# SECTION 4 — TEST SEQUENTIAL PLOT + BOX-AND-WHISKER PLOT
+# ============================================================
 
+st.header("Section 4: Sequential Plot + Box-and-Whisker Plot")
+
+st.write(
+    "Upload a CSV file with no header. The first column should "
+    "contain the measurement number, and the second column should "
+    "contain the measured value."
+)
+
+st.write(
+    "Enter the five-number summary, sample mean, and sample standard "
+    "deviation that you calculated from your data."
+)
+
+
+# ------------------------------------------------------------
+# DATA LABEL
+# ------------------------------------------------------------
+
+test_y_label = st.text_input(
+    "Data label (include the unit if applicable)",
+    placeholder="e.g., Resistance, R (kΩ)",
+    key="section4_y_label"
+)
+
+
+# ------------------------------------------------------------
+# UPLOAD CSV
+# ------------------------------------------------------------
+
+test_file = st.file_uploader(
+    "Upload sequential-data CSV file",
+    type=["csv"],
+    key="section4_file"
+)
+
+
+# ============================================================
+# ENTER STATISTICAL VALUES
+# ============================================================
+
+st.subheader("Enter Statistical Values")
+
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    test_min = st.number_input(
+        "Minimum",
+        value=0.0,
+        format="%.6g",
+        key="section4_min"
+    )
+
+with col2:
+    test_q1 = st.number_input(
+        "Q1",
+        value=1.0,
+        format="%.6g",
+        key="section4_q1"
+    )
+
+with col3:
+    test_median = st.number_input(
+        "Median (Q2)",
+        value=2.0,
+        format="%.6g",
+        key="section4_median"
+    )
+
+with col4:
+    test_q3 = st.number_input(
+        "Q3",
+        value=3.0,
+        format="%.6g",
+        key="section4_q3"
+    )
+
+
+col5, col6, col7 = st.columns(3)
+
+with col5:
+    test_max = st.number_input(
+        "Maximum",
+        value=4.0,
+        format="%.6g",
+        key="section4_max"
+    )
+
+with col6:
+    test_mean = st.number_input(
+        "Sample Mean",
+        value=2.0,
+        format="%.6g",
+        key="section4_mean"
+    )
+
+with col7:
+    test_std = st.number_input(
+        "Sample Standard Deviation",
+        min_value=0.0,
+        value=1.0,
+        format="%.6g",
+        key="section4_std"
+    )
+
+
+# ============================================================
+# CHECK FIVE-NUMBER SUMMARY
+# ============================================================
+
+valid_test_summary = (
+    test_min <= test_q1 <= test_median <= test_q3 <= test_max
+)
+
+if not valid_test_summary:
+
+    st.warning(
+        "The five-number summary must satisfy: "
+        "Minimum ≤ Q1 ≤ Median ≤ Q3 ≤ Maximum."
+    )
+
+
+# ============================================================
+# READ CSV AND CREATE FIGURE
+# ============================================================
+
+if test_file is not None and valid_test_summary:
+
+    test_df = pd.read_csv(
+        test_file,
+        header=None
+    )
+
+    if test_df.shape[1] < 2:
+
+        st.error(
+            "The CSV file must contain at least two columns."
+        )
+
+    else:
+
+        # Keep only the first two columns
+        test_df = test_df.iloc[:, :2]
+
+        test_df.columns = [
+            "Measurement Number",
+            "Data"
+        ]
+
+
+        # ----------------------------------------------------
+        # CONVERT TO NUMERIC
+        # ----------------------------------------------------
+
+        test_df["Measurement Number"] = pd.to_numeric(
+            test_df["Measurement Number"],
+            errors="coerce"
+        )
+
+        test_df["Data"] = pd.to_numeric(
+            test_df["Data"],
+            errors="coerce"
+        )
+
+
+        # Remove invalid rows
+        test_df = test_df.dropna(
+            subset=[
+                "Measurement Number",
+                "Data"
+            ]
+        )
+
+
+        if len(test_df) == 0:
+
+            st.error(
+                "No valid numeric data were found."
+            )
+
+        else:
+
+            # ------------------------------------------------
+            # EXTRACT DATA
+            # ------------------------------------------------
+
+            test_x = test_df[
+                "Measurement Number"
+            ].to_numpy()
+
+            test_y = test_df[
+                "Data"
+            ].to_numpy()
+
+
+            # ------------------------------------------------
+            # SHOW IMPORTED DATA
+            # ------------------------------------------------
+
+            st.subheader("Imported Sequential Data")
+
+            st.dataframe(
+                test_df,
+                hide_index=True,
+                use_container_width=True
+            )
+
+
+            # =================================================
+            # CREATE FIGURE
+            # =================================================
+
+            st.subheader(
+                "Sequential Plot + Box-and-Whisker Plot"
+            )
+
+            fig4, ax4 = plt.subplots(
+                figsize=(9, 5)
+            )
+
+
+            # =================================================
+            # SEQUENTIAL PLOT
+            # ============================================================
+
+            ax4.plot(
+                test_x,
+                test_y,
+
+                # Large open-circle symbols
+                marker="o",
+                markersize=7,
+                markerfacecolor="none",
+                markeredgecolor="black",
+                markeredgewidth=1.2,
+
+                # Thin connecting line
+                linestyle="-",
+                linewidth=0.8,
+                color="black"
+            )
+
+
+            # =================================================
+            # SAMPLE MEAN AND ± STANDARD DEVIATION
+            # ============================================================
+
+            # Sample mean
+            ax4.hlines(
+                y=test_mean,
+                xmin=0,
+                xmax=100,
+                colors="gray",
+                linestyles="--",
+                linewidth=0.8
+            )
+
+            # Sample mean + standard deviation
+            ax4.hlines(
+                y=test_mean + test_std,
+                xmin=0,
+                xmax=100,
+                colors="gray",
+                linestyles="--",
+                linewidth=0.8
+            )
+
+            # Sample mean - standard deviation
+            ax4.hlines(
+                y=test_mean - test_std,
+                xmin=0,
+                xmax=100,
+                colors="gray",
+                linestyles="--",
+                linewidth=0.8
+            )
+
+
+            # =================================================
+            # BOX-AND-WHISKER STATISTICS
+            # ============================================================
+
+            test_box_stats = [{
+                "med": test_median,
+                "q1": test_q1,
+                "q3": test_q3,
+                "whislo": test_min,
+                "whishi": test_max,
+                "fliers": []
+            }]
+
+
+            # =================================================
+            # BOX-AND-WHISKER PLOT
+            # ============================================================
+
+            # Place the box at x = 110.
+            # Its width is 10, so it occupies approximately
+            # x = 105 to 115.
+
+            ax4.bxp(
+                test_box_stats,
+                positions=[110],
+                widths=10,
+                vert=True,
+                showfliers=False,
+                patch_artist=False
+            )
+
+
+            # =================================================
+            # X-AXIS
+            # ============================================================
+
+            # Sequential measurements occupy 1–100.
+            # The box is centered at 110.
+            # Extend the axis to 120 to provide space for it.
+
+            ax4.set_xlim(
+                0,
+                120
+            )
+
+            # Glen-style major ticks.
+            # There is intentionally no tick at 110.
+            ax4.set_xticks(
+                [0, 20, 40, 60, 80, 100, 120]
+            )
+
+            ax4.set_xlabel(
+                r"Measurement Number, $i$",
+                fontsize=11
+            )
+
+
+            # =================================================
+            # Y-AXIS
+            # ============================================================
+
+            ax4.set_ylabel(
+                test_y_label,
+                fontsize=11
+            )
+
+
+            # =================================================
+            # TICK SIZE
+            # ============================================================
+
+            ax4.tick_params(
+                axis="both",
+                labelsize=10
+            )
+
+
+            # =================================================
+            # GRID
+            # ============================================================
+
+            ax4.grid(
+                True,
+                axis="y",
+                alpha=0.3
+            )
+
+
+            # =================================================
+            # FINISH FIGURE
+            # ============================================================
+
+            fig4.tight_layout()
+
+            st.pyplot(fig4)
+
+
+            # =================================================
+            # DOWNLOAD FIGURE
+            # ============================================================
+
+            buffer4 = BytesIO()
+
+            fig4.savefig(
+                buffer4,
+                format="png",
+                dpi=300,
+                bbox_inches="tight"
+            )
+
+            buffer4.seek(0)
+
+            st.download_button(
+                label=(
+                    "Download Sequential Plot + "
+                    "Box-and-Whisker Plot"
+                ),
+                data=buffer4,
+                file_name="section4_test_plot.png",
+                mime="image/png",
+                key="section4_download"
+            )
+
+            plt.close(fig4)
+            
 # ============================================================
 # FOOTER
 # ============================================================
